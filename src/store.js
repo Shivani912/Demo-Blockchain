@@ -95,7 +95,7 @@ export default new Vuex.Store({
   actions: {
   
     createBlock ({commit, state}, blockData) {
-      debugger
+      
       let index = state.blocks.length
       commit('setIndex', index)
       if(index === 0)

@@ -1,7 +1,13 @@
 <template>
     <div class="margin">
         <h1> BLOCKCHAIN</h1>
-        <b-button v-on:click="resetBlockchain" class="reset">Reset</b-button>
+        <div class="reset">
+            DIFFICULTY
+                <input v-model="BC_DIFFICULTY" type="text" />
+                <b-button v-on:click="addOrReset('reset')" class="resetBtn">Reset</b-button>
+        </div>
+        
+        
         <div v-for="block in blocks" :key="block.id" id="parentDiv">
             <b-card class="bcard">
                 <b-card-title class="col-sm-3.5">{{block.blockTitle}} </b-card-title>
@@ -22,7 +28,7 @@
                 <b-input-group prepend="Data"  >
                      <b-form-input type="text" v-model="newBlockData" />
                 </b-input-group>
-                <b-button v-on:click="addNewBlock" class="addNewBtn">+ ADD NEW BLOCK </b-button>
+                <b-button v-on:click="addOrReset('add')" class="addNewBtn">+ ADD NEW BLOCK </b-button>
             </b-card>
         </div>
     </div>
@@ -34,34 +40,12 @@ import { ethers } from 'ethers'
 export default {
     name: 'block',
     created: function() {
-        this.resetBlockchain()
-        // this.$store.state.blocks = []
-        // this.$store.commit('resetState')
-        // this.$store.commit('resetStore')
-      
-        
-        // if(!(this.$store.state.blocks.length >= 1)) {
-        //     let blockData = 'Genesis Block'
-        //     this.$store.dispatch('createBlock', blockData)
-
-        //     let data = {
-        //         index: this.$store.state.block.index, 
-        //         timestamp: this.$store.state.block.timestamp, 
-        //         prevHash: this.$store.state.block.prevHash, 
-        //         blockData: this.$store.state.block.blockData,
-        //     }
-            
-        //     let returnData = this.calculateNonce(data) 
-        //     let nonce = returnData.nonce
-        //     let hash = this.hashBlock(returnData)
-        //     this.$store.dispatch('addBlock', {nonce,hash})
-            
-        // }
-        
+        this.addOrReset('reset')
     },
     data() {
         return {
-            newBlockData: ''
+            newBlockData: '',
+            BC_DIFFICULTY: 2
         }
     },
     
@@ -70,11 +54,23 @@ export default {
             return  this.$store.state.blocks
         }
     },
+
     methods: {
-        addNewBlock() {
+        addOrReset(action) {
             
-            this.$store.commit('initialiseStore')
-            let blockData = this.newBlockData
+            let blockData = ''
+            if (action === 'add') {
+                
+                this.$store.commit('initialiseStore')
+                blockData = this.newBlockData
+            }
+            else if (action === 'reset') {
+
+                this.$store.state.blocks = []
+                this.$store.commit('resetStore')
+                blockData = 'Genesis Block'
+            }
+            
             this.$store.dispatch('createBlock', blockData)
             let data = {
                 index: this.$store.state.block.index, 
@@ -82,6 +78,7 @@ export default {
                 prevHash: this.$store.state.block.prevHash, 
                 blockData: this.$store.state.block.blockData,
             }
+
             let returnData = this.calculateNonce(data) 
             let nonce = returnData.nonce
             
@@ -91,28 +88,6 @@ export default {
             this.newBlockData = ''
         },
         
-        resetBlockchain() {
-            
-            this.$store.state.blocks = []
-            this.$store.commit('resetStore')
-            let blockData = 'Genesis Block'
-            
-            this.$store.dispatch('createBlock', blockData)
-            
-            let data = {
-                index: this.$store.state.block.index, 
-                timestamp: this.$store.state.block.timestamp, 
-                prevHash: this.$store.state.block.prevHash, 
-                blockData: this.$store.state.block.blockData,
-            }
-    
-            let returnData = this.calculateNonce(data) 
-            let nonce = returnData.nonce
-            let hash = this.hashBlock(returnData)
-            this.$store.dispatch('addBlock', {nonce,hash})
-           
-            
-        },
         verifyBlock(block) {
             
             let hashOfBl = block.blockHash
@@ -125,35 +100,36 @@ export default {
             }
             
             let hash = this.hashBlock(data)
-            if( hashOfBl === hash) {
-               
-                this.resetElement(block.index, hashOfBl)
-            }
-            else {
+            let action = ( hashOfBl === hash) ? {action:'reset', hash: hashOfBl}:{action: 'change', hash: hash}
             
-                this.changeElement(block.index, hash)
-            }
+            this.changeOrResetElement(action.action, block.index, action.hash)
             
         },
-        changeElement(index, hash) {
-            
+        changeOrResetElement(action, index, hash) {
+           
             let element = null
             element = document.getElementById(index)
             element.innerHTML = hash
-            element.className = 'invalidHash'
-            // element.style.color = "red"
+            let valid
+             if(action === 'change') {
+                element.className = 'invalidHash'
+                valid = false
+            }
+            else if(action === 'reset') {
+                element.className = 'validHash'
+                valid = true
+            }
             
-            // element.style.border = "1px solid"
-            let valid = false
             this.$store.commit('setValidityByIndex', {index,valid})
+
             if(this.$store.state.blocks[index+1]) {
-                this.changeNextElement(index+1,hash)
-                
-                // this.$store.state.blocks[index+1]
+                this.changeOrResetNextElement(action, index+1,hash)
+            
             }
             
         },
-        changeNextElement(index, hash) {
+        
+        changeOrResetNextElement(action, index, hash) {
             let parent = document.getElementById("parentDiv")
             let nextElementStr = parent
             for(let i=0; i < index; i++) {
@@ -162,7 +138,12 @@ export default {
             let prevHash = nextElementStr.lastElementChild.firstElementChild.children[3] 
             
             prevHash.innerHTML = hash
-            prevHash.className = 'invalidPrevHash'
+            if(action === 'change') {
+                prevHash.className = 'invalidPrevHash'
+            }
+            else if(action === 'reset') {
+                prevHash.className = 'validPrevHash'
+            }
           
             let block = {
                 index: index, 
@@ -175,43 +156,6 @@ export default {
             
             this.verifyBlock(block)
         },
-        resetElement(index, hash) {
-            let element = null
-            element = document.getElementById(index)
-            element.innerHTML = hash
-            element.className = 'validHash'
-            // element.style.color = "black"
-            // element.style.border = "none"
-            let valid = true
-            this.$store.commit('setValidityByIndex',{index,valid})
-            if(this.$store.state.blocks[index+1]) {
-                this.resetNextElement(index+1,hash)
-            }
-    
-        },
-
-        resetNextElement(index, hash) {
-            let parent = document.getElementById("parentDiv")
-            let nextElementStr = parent
-            for(let i=0; i < index; i++) {
-                nextElementStr = nextElementStr.nextElementSibling
-            }
-            let prevHash = nextElementStr.lastElementChild.firstElementChild.children[3] 
-            prevHash.innerHTML = hash
-            prevHash.className = 'validPrevHash'
-
-            let block = {
-                index: index, 
-                timestamp: this.$store.state.blocks[index].timestamp, 
-                prevHash: hash,
-                blockData: this.$store.state.blocks[index].blockData,
-                blockHash: this.$store.state.blocks[index].blockHash,
-                nonce: this.$store.state.blocks[index].nonce
-            }
-            
-            this.verifyBlock(block)
-        },
-
         
         hashBlock(bl) {
             let str = JSON.stringify(bl)
@@ -224,14 +168,22 @@ export default {
             let hexifiedBl = result
             return ethers.utils.keccak256("0x" + hexifiedBl)
         },
+
         calculateNonce(data) {
             // https://stackoverflow.com/a/10869248
-            
+            debugger
             let clonedBl = JSON.parse(JSON.stringify(data))
             let nonce = 0
             clonedBl["nonce"] = nonce
             let hash = this.hashBlock(clonedBl)
-            while(!(hash.substring(2, 5) === "000")) {
+            let zeroes = ''
+            let diff = parseInt(this.BC_DIFFICULTY)
+            for(let i =0; i < diff; i++) {
+                zeroes = zeroes + '0'
+               
+            }
+            while(!(hash.substring(2, diff+2) === zeroes)) {
+                
                 nonce++
                 clonedBl["nonce"] = nonce
                 hash = this.hashBlock(clonedBl)
@@ -241,7 +193,6 @@ export default {
             return data
         },
         remine(block) {
-            
             
             let data = {
                 index: block.index, 
@@ -256,11 +207,8 @@ export default {
             let blockData = data.blockData
            
             this.$store.commit('remineBlock', {index, hash,nonce,blockData})
-            this.resetElement(index,hash)
-           
-            
-            
-
+            let action = 'reset'
+            this.changeOrResetElement(action, index,hash)
         }
     }
 }
@@ -277,7 +225,6 @@ export default {
         
     }
     #parentDiv{
-        /* max-width: 70%; */
         margin: 5% 20% 5% 20%;
     }
     h4{
@@ -285,8 +232,6 @@ export default {
     }
     h1{
         text-align: center;
-        /* position: fixed;
-        margin: 0 26% 5%; */
     }
     small{
         top: 2px;
@@ -338,16 +283,21 @@ export default {
         padding: 0.2em 0.8em 0.2em 0.8em;
     }
     .reset {
+        width: 400px;
+        text-align: center;
+        margin-left: 35%;
+        margin-top: 5%;
+    }
+    .resetBtn {
         background-color:white;
         color: #17a2b8;
         border: 2px solid;
-        border-radius: 50%;
+        border-radius: 10%;
         border-color: #17a2b8;
-        height: 70px;
+        height: 40px;
         width: 70px;
         text-align: center;
-        margin-left: 46%;
-        margin-top: 5%;
+        margin-left: 2%;
     }
     .addNewBlock{
         margin-left: 30%;
@@ -359,7 +309,10 @@ export default {
         border-bottom-right-radius:75px;
         border-top-left-radius:75px;
         border-top-right-radius:75px;
+        border: 0px;
         padding: 15px 20px 15px 20px;
+        background-color: red; /* For browsers that do not support gradients */
+        background-image: linear-gradient(to top right, rgb(221, 40, 40), rgb(241, 238, 56)); 
 
     }
     div.bcard:hover{
