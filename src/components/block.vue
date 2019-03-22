@@ -171,7 +171,7 @@ export default {
 
         calculateNonce(data) {
             // https://stackoverflow.com/a/10869248
-            debugger
+           
             let clonedBl = JSON.parse(JSON.stringify(data))
             let nonce = 0
             clonedBl["nonce"] = nonce
@@ -232,6 +232,8 @@ export default {
     }
     h1{
         text-align: center;
+        color: #17a2b8;
+        font-size:60px;
     }
     small{
         top: 2px;

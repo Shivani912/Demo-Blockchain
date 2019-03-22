@@ -22,6 +22,8 @@ When a block becomes invalid, the nonce is replaced with a Remine button. Remini
 The DIFFICULTY field defines the difficulty of the mining process. For example, a difficulty of 3 requires every block's hash to have 3 leading zeroes. 
 
 The Reset Button reinitializes the blockchain with the difficulty, if specified.
+
+NOTE: The folder does not contain node modules.
 ```
 
 

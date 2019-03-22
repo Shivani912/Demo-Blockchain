@@ -1,9 +1,11 @@
 <template>
+
   <div id="app">
     
   <block></block>
     
   </div>
+
 </template>
 
 <script>
@@ -20,14 +22,18 @@ export default {
 <style>
 #app {
   font-family: DINPro,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif;
-  /* 'Avenir', Helvetica, Arial, sans-serif; */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* text-align: center; */
   color: #2c3e50;
   line-height: 2;
   margin-top: 60px;
   font-size: 1rem;
-  /* background-color: dimgray; */
 }
+body {
+  background-color: #f8f9fa;
+}
+
 </style>
+
+
+
